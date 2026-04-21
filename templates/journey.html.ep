@@ -225,6 +225,30 @@
 						</td>
 					</tr>
 				% }
+				% if ($journey->{user_data} and $journey->{user_data}{wagon_number}) {
+					<tr>
+						<th scope="row">Wagennummer</th>
+						<td><%= $journey->{user_data}{wagon_number} %></td>
+					</tr>
+				% }
+				% if ($journey->{user_data} and $journey->{user_data}{seat_number}) {
+					<tr>
+						<th scope="row">Sitzplatznummer</th>
+						<td><%= $journey->{user_data}{seat_number} %></td>
+					</tr>
+				% }
+				% if ($journey->{user_data} and defined $journey->{user_data}{boarding_delay}) {
+					<tr>
+						<th scope="row">Verspätung beim Einstieg</th>
+						<td><%= $journey->{user_data}{boarding_delay} %> min</td>
+					</tr>
+				% }
+				% if ($journey->{user_data} and $journey->{user_data}{defects}) {
+					<tr>
+						<th scope="row">Defekte vorhanden</th>
+						<td><%= $journey->{user_data}{defects} %></td>
+					</tr>
+				% }
 				% if ($journey->{user_data} and $journey->{user_data}{wagongroups} and not exists $journey->{user_data}{wagons}) {
 				<tr>
 					<th scope="row"><%= L('journey.carriages') %></th>

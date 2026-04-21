@@ -36,6 +36,54 @@ sub compute_effective_visibility {
 	return $journey_visibility;
 }
 
+sub trim {
+	my ($value) = @_;
+
+	$value //= q{};
+	$value =~ s{^\s+}{};
+	$value =~ s{\s+$}{};
+	return $value;
+}
+
+sub parse_checkin_optional_fields {
+	my ($params) = @_;
+
+	my %user_data;
+
+	my $wagon_number = trim( $params->{wagon_number} );
+	if ( length $wagon_number > 8 ) {
+		return ( undef, 'Wagennummer darf maximal 8 Zeichen lang sein.' );
+	}
+	if ( length $wagon_number ) {
+		$user_data{wagon_number} = $wagon_number;
+	}
+
+	my $seat_number = trim( $params->{seat_number} );
+	if ( length $seat_number > 25 ) {
+		return ( undef, 'Sitzplatznummer darf maximal 25 Zeichen lang sein.' );
+	}
+	if ( length $seat_number ) {
+		$user_data{seat_number} = $seat_number;
+	}
+
+	my $boarding_delay = trim( $params->{boarding_delay} );
+	if ( length $boarding_delay ) {
+		if ( $boarding_delay !~ m{^\d{1,3}$} ) {
+			return ( undef,
+'Verspätung beim Einstieg muss aus 1 bis 3 Ziffern bestehen.'
+			);
+		}
+		$user_data{boarding_delay} = int($boarding_delay);
+	}
+
+	my $defects = trim( $params->{defects} );
+	if ( length $defects ) {
+		$user_data{defects} = $defects;
+	}
+
+	return ( \%user_data, undef );
+}
+
 # Controllers
 
 sub homepage {
@@ -434,6 +482,17 @@ sub travel_action {
 	my $station = $params->{station};
 
 	if ( $params->{action} eq 'checkin' ) {
+		my ( $checkin_user_data, $validation_error )
+		  = parse_checkin_optional_fields($params);
+		if ($validation_error) {
+			$self->render(
+				json => {
+					success => 0,
+					error   => $validation_error,
+				},
+			);
+			return;
+		}
 
 		my $status = $self->get_user_status;
 		my $promise;
@@ -461,6 +520,16 @@ sub travel_action {
 					train_suffix => $params->{suffix},
 					ts           => $params->{ts},
 				);
+			}
+		)->then(
+			sub {
+				if ( %{$checkin_user_data} ) {
+					$self->in_transit->update_user_data(
+						uid       => $self->current_user->{id},
+						user_data => $checkin_user_data,
+					);
+				}
+				return;
 			}
 		)->then(
 			sub {
@@ -2588,6 +2657,27 @@ sub add_intransit_form {
 
 		for my $key (qw(dep_station arr_station route comment)) {
 			$trip{$key} = $self->param($key);
+		}
+		my ( $checkin_user_data, $validation_error )
+		  = parse_checkin_optional_fields(
+			{
+				wagon_number   => $self->param('wagon_number'),
+				seat_number    => $self->param('seat_number'),
+				boarding_delay => $self->param('boarding_delay'),
+				defects        => $self->param('defects'),
+			}
+		  );
+		if ($validation_error) {
+			$self->render(
+				'add_intransit',
+				with_autocomplete => 1,
+				status            => 400,
+				error             => $validation_error,
+			);
+			return;
+		}
+		for my $key ( keys %{$checkin_user_data} ) {
+			$trip{$key} = $checkin_user_data->{$key};
 		}
 
 		$opt{backend_id} = $self->current_user->{backend_id};

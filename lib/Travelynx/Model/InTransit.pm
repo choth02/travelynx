@@ -430,6 +430,11 @@ sub add {
 		if ( $manual->{comment} ) {
 			$persistent_data->{comment} = $manual->{comment};
 		}
+		for my $key (qw(wagon_number seat_number boarding_delay defects)) {
+			if ( defined $manual->{$key} and $manual->{$key} ne q{} ) {
+				$persistent_data->{$key} = $manual->{$key};
+			}
+		}
 		$db->insert(
 			'in_transit',
 			{
@@ -535,6 +540,10 @@ sub postprocess {
 	$ret->{route_after}        = \@route_after;
 	$ret->{extra_data}         = $ret->{data};
 	$ret->{comment}            = $ret->{user_data}{comment};
+	$ret->{wagon_number}       = $ret->{user_data}{wagon_number};
+	$ret->{seat_number}        = $ret->{user_data}{seat_number};
+	$ret->{boarding_delay}     = $ret->{user_data}{boarding_delay};
+	$ret->{defects}            = $ret->{user_data}{defects};
 	$ret->{wagongroups}        = $ret->{user_data}{wagongroups};
 
 	if ( $ret->{extra_data}{last_update} ) {
