@@ -1,4 +1,11 @@
+**THIS IS A FORK!**
+
+---
 travelynx - Railway Travel Logger
+---
+
+**THIS IS A FORK!**
+
 ---
 
 [travelynx](https://finalrewind.org/projects/travelynx/) allows checking into
