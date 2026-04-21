@@ -18,6 +18,22 @@
 			% if ($journey->{comment}) {
 				<p><%= $journey->{comment} %></p>
 			% }
+			% if ($journey->{wagon_number} or $journey->{seat_number} or defined $journey->{boarding_delay} or $journey->{defects}) {
+				<p>
+					% if ($journey->{wagon_number}) {
+						Wagen: <%= $journey->{wagon_number} %><br/>
+					% }
+					% if ($journey->{seat_number}) {
+						Sitzplatz: <%= $journey->{seat_number} %><br/>
+					% }
+					% if (defined $journey->{boarding_delay}) {
+						Verspätung beim Einstieg: <%= $journey->{boarding_delay} %> min<br/>
+					% }
+					% if ($journey->{defects}) {
+						Defekte vorhanden: <%= $journey->{defects} %>
+					% }
+				</p>
+			% }
 			<p>
 				<div class="center-align countdown"
 					data-journey="<%= $journey->{real_departure}->epoch %>;<%= <%= $journey->{real_arrival}->epoch %>"

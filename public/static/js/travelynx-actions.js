@@ -87,6 +87,55 @@ function odelay(sched, rt) {
 	return ' (' + Math.round((rt - sched) / 60) + ')';
 }
 
+function tvly_trim(value) {
+	if (value == null) {
+		return '';
+	}
+	return value.replace(/^\s+|\s+$/g, '');
+}
+
+function tvly_collect_optional_checkin_data() {
+	var req = {};
+
+	if (!confirm('Optionale Checkin-Felder eintragen?\nOK: Eingeben\nAbbrechen: überspringen')) {
+		return req;
+	}
+
+	var wagon_number = tvly_trim(prompt('Wagennummer (optional, max. 8 Zeichen):', ''));
+	if (wagon_number.length > 8) {
+		M.toast({html: '<i class="material-icons">error</i> Wagennummer darf maximal 8 Zeichen lang sein.'});
+		return null;
+	}
+	if (wagon_number.length > 0) {
+		req.wagon_number = wagon_number;
+	}
+
+	var seat_number = tvly_trim(prompt('Sitzplatznummer (optional, max. 25 Zeichen):', ''));
+	if (seat_number.length > 25) {
+		M.toast({html: '<i class="material-icons">error</i> Sitzplatznummer darf maximal 25 Zeichen lang sein.'});
+		return null;
+	}
+	if (seat_number.length > 0) {
+		req.seat_number = seat_number;
+	}
+
+	var boarding_delay = tvly_trim(prompt('Verspätung beim Einstieg in Minuten (optional, 1-3 Ziffern):', ''));
+	if (boarding_delay.length > 0 && !boarding_delay.match(/^\d{1,3}$/)) {
+		M.toast({html: '<i class="material-icons">error</i> Verspätung beim Einstieg muss aus 1 bis 3 Ziffern bestehen.'});
+		return null;
+	}
+	if (boarding_delay.length > 0) {
+		req.boarding_delay = boarding_delay;
+	}
+
+	var defects = tvly_trim(prompt('Defekte vorhanden (optional):', ''));
+	if (defects.length > 0) {
+		req.defects = defects;
+	}
+
+	return req;
+}
+
 function tvly_run(link, req, err_callback) {
 	var error_icon = '<i class="material-icons">error</i>';
 	var progressbar;
@@ -211,6 +260,11 @@ function tvly_reg_handlers() {
 			dest: link.data('dest'),
 			ts: link.data('ts'),
 		};
+		var optional_data = tvly_collect_optional_checkin_data();
+		if (optional_data === null) {
+			return;
+		}
+		req = Object.assign(req, optional_data);
 		tvly_run(link, req);
 	});
 	$('.action-checkout').click(function() {
